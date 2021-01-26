@@ -1,0 +1,4 @@
+[submodule "lammps"]
+	path = lammps
+	url = https://github.com/faasm/lammps
+	branch = mpi-native

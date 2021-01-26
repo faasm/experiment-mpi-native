@@ -3,7 +3,6 @@ from subprocess import run
 from copy import copy
 import os
 
-from faasmtools.build import CMAKE_TOOLCHAIN_FILE
 from tasks.util.file import clean_dir
 from invoke import task
 
@@ -57,13 +56,13 @@ def build(ctx, clean=False):
 
 
 @task
-def native(ctx, clean=False):
+def lammps(ctx, clean=False):
     """
-    Build and install LAMMPS natively
+    Build and install LAMMPS with the faabric mpi binding
     """
     work_dir = join(LAMMPS_DIR, "build-native")
     cmake_dir = join(LAMMPS_DIR, "cmake")
-    install_dir = join(LAMMPS_DIR, "install-native")
+    install_dir = join(LAMMPS_DIR, "install-faabric")
 
     clean_dir(work_dir, clean)
     clean_dir(install_dir, clean)
@@ -73,6 +72,7 @@ def native(ctx, clean=False):
     cmake_cmd = [
         "cmake",
         "-GNinja",
+        "-DCMAKE_BUILD_TYPE=Debug",
         "-DCMAKE_C_COMPILER=/usr/bin/clang-10",
         "-DCMAKE_CXX_COMPILER=/usr/bin/clang++-10",
         "-DCMAKE_INSTALL_PREFIX={}".format(install_dir),
@@ -82,35 +82,14 @@ def native(ctx, clean=False):
     cmake_str = " ".join(cmake_cmd)
     print(cmake_str)
 
-    res = run(cmake_str, shell=True, cwd=work_dir, env=env_vars)
+    res = run(cmake_str, shell=True, check=True, cwd=work_dir, env=env_vars)
     if res.returncode != 0:
-        raise RuntimeError("LAMMPS native CMake config failed")
+        raise RuntimeError("LAMMPS CMake config failed")
 
-    res = run("ninja", shell=True, cwd=work_dir)
+    res = run("ninja", shell=True, check=True, cwd=work_dir)
     if res.returncode != 0:
-        raise RuntimeError("LAMMPS native build failed")
+        raise RuntimeError("LAMMPS build failed")
 
-    res = run("ninja install", shell=True, cwd=work_dir)
+    res = run("ninja install", shell=True, check=True, cwd=work_dir)
     if res.returncode != 0:
         raise RuntimeError("LAMMPS install failed")
-
-
-@task
-def copy_wasm(ctx, clean=False):
-    """
-    Manually copy the LAMMPS binary to the Faasm func dir
-    """
-    install_dir = join(LAMMPS_DIR, "install", "bin")
-    faasm_func_dir = "/usr/local/code/faasm/wasm/lammps/main"
-    cmd = [
-        "cp",
-        "{}/lmp".format(install_dir),
-        "{}/function.wasm".format(faasm_func_dir),
-    ]
-
-    cmd = " ".join(cmd)
-    print(cmd)
-
-    res = run(cmd, shell=True)
-    if res.returncode != 0:
-        raise RuntimeError("Copying wasm file failed")

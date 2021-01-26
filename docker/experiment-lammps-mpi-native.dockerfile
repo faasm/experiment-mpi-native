@@ -9,7 +9,11 @@ ARG FAABRIC_VERSION
 
 FROM faasm/faabric-mpi-native:${FAABRIC_VERSION} as mpi-native
 
+# Prepare code
 WORKDIR /code
-RUN git clone -b mpi-native https://github.com/faasm/lammps
+RUN git clone https://github.com/faasm/experiment-mpi-native
+WORKDIR /code/experiment-mpi-native
+RUN git submodule update --init
 
-WORKDIR /code/lammps/build
+# Compile LAMMPS
+RUN ./build/lammps.sh
