@@ -19,9 +19,9 @@ services:
       - redis
 
   master:
-    image: ${FAABRIC_MPI_NATIVE_IMAGE}
+    image: ${LAMMPS_MPI_NATIVE_IMAGE}
     entrypoint: ['/code/experiment-mpi-native/run/lammps.sh', 'master', '${MPI_WORLD_SIZE}']
-    working_dir: /code/faabric
+    working_dir: /code/experiment-mpi-native
     privileged: true
     environment:
       - LD_LIBRARY_PATH=/usr/local/lib:/build/faabric/install/lib
